@@ -34,7 +34,7 @@ Likewise, a due date does not authorize a Calendar event or notification. Schedu
 
 ## Example architecture: TaskHub's local flow and planned integrations
 
-TaskHub has implemented local task operations through an MCP server and a JSON file. The solid arrows show that local path, verified by automated tests and a manual Codex workflow. Dashed arrows to the future skill, Drive, and Calendar show planned components; the diagram does not claim cloud or shared-account behavior.
+TaskHub has implemented local task operations through an MCP server and a JSON file. The solid arrows show that local path, verified by automated tests and a manual Codex workflow. Dashed arrows show guidance from project instructions and proposed connections to a future skill, Drive, and Calendar. The diagram does not claim cloud or shared-account behavior.
 
 ```mermaid
 flowchart LR
@@ -43,7 +43,8 @@ flowchart LR
     S[Future TaskHub skill] -. workflow guidance .-> C
     C -->|structured call| M[Local MCP tools]
     M -->|call operation| A[Task core]
-    A -->|read/change store contract| L[(Local JSON file)]
+    A -->|read/change store contract| J[JSON storage adapter]
+    J --> L[(Local JSON file)]
     A -. later: Drive adapter .-> D[(Google Drive)]
     A -. later: explicit scheduling .-> G[Google Calendar adapter]
 ```
@@ -81,4 +82,4 @@ Official product and protocol details can change. Recheck the linked OpenAI docu
 
 ## Next steps
 
-The next chapter introduces TaskHub's scope and repository rules. Later chapters examine the implemented core, JSON storage, and MCP tools before adding a reusable skill. The distinction in this chapter will help you judge each implementation choice: what guides Codex, what performs the action, and what enforces the rule?
+The [next chapter](02-building-your-first-mcp-server.md) builds the original local TaskHub milestone from scratch: task core, JSON storage, MCP tools, and tests. Use the distinctions here as you follow it: what guides Codex, what performs the action, and what enforces the rule?

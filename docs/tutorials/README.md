@@ -7,9 +7,9 @@ Conceptual chapters may use clearly labeled proposed designs. Write implementati
 ## Proposed series
 
 1. **[Understanding Codex Extensibility](01-understanding-codex-extensibility.md)** — project instructions, skills, MCP, APIs, persistence, and enforcement boundaries.
-2. **Introducing TaskHub and the repository** — scope, explicit task creation, and development rules.
-3. **Separating task behavior from integrations** — the core model, storage interface, and local operations.
-4. **Building a Codex tool with MCP** — expose verified local task operations and handle user intent.
+2. **[Building Your First Codex MCP Server: A Task Manager from Scratch](02-building-your-first-mcp-server.md)** — reproduce the verified local task core, JSON store, MCP tools, and tests.
+3. **Testing the task core and storage boundary** — examine validation, file format, and local concurrency in more detail.
+4. **Designing safer MCP workflows** — examine tool schemas, descriptions, and explicit-intent limits in more detail.
 5. **Writing a reusable Codex skill** — instructions and workflows around the tool.
 6. **Adding Google Drive persistence** — authentication, data format, and storage adapter.
 7. **Supporting multiple devices and accounts** — sharing, authorization, and concurrent edits.
@@ -19,6 +19,6 @@ Conceptual chapters may use clearly labeled proposed designs. Write implementati
 
 ## Tutorial milestone tracker
 
-The local task core, JSON storage, and MCP tools were committed in `29a1fea` and verified locally as recorded in the [development journal](../development-journal.md). Chapter 1 uses that milestone to explain the architecture without a code walkthrough. Add reproducible examples to implementation chapters when they are written and verified.
+The local task core, JSON storage, and MCP tools were committed in `29a1fea` and verified locally as recorded in the [development journal](../development-journal.md). Chapter 1 explains the architecture; Chapter 2 reproduces that milestone. Add examples to later chapters when they are written and verified.
 
 The separate Tutorial Writer skill is outside this series' current implementation scope.
