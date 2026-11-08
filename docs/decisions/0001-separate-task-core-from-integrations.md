@@ -1,11 +1,11 @@
 # ADR 0001: Separate task behavior from integrations
 
-- **Status:** Proposed
+- **Status:** Partially implemented (local core and MCP boundary)
 - **Date:** 2026-11-07
 
 ## Context
 
-TaskHub is intended to support local development, Google Drive persistence, Google Calendar scheduling, Codex tools, and a visual interface. These integrations have different authentication and runtime needs. The project has no application implementation yet.
+TaskHub is intended to support local development, Google Drive persistence, Google Calendar scheduling, Codex tools, and a visual interface. These integrations have different authentication and runtime needs. The local core and MCP boundary are now implemented; cloud and visual integrations remain proposed.
 
 ## Proposed decision
 
@@ -19,4 +19,4 @@ Define task data and operations in a core package that depends on a storage inte
 
 ## Consequences and open questions
 
-The storage interface, Drive file format, ownership and sharing model, and concurrent edit policy remain to be designed and verified. This record does not claim that Google Drive storage or cross-account access works.
+The local storage contract is implemented. Drive file format, ownership and sharing model, and concurrent edit policy remain to be designed and verified. This record does not claim that Google Drive storage or cross-account access works.
