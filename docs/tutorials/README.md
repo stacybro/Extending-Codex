@@ -8,7 +8,7 @@ Conceptual chapters may use clearly labeled proposed designs. Write implementati
 
 1. **[Understanding Codex Extensibility](01-understanding-codex-extensibility.md)** — project instructions, skills, MCP, APIs, persistence, and enforcement boundaries.
 2. **[Building Your First Codex MCP Server: A Task Manager from Scratch](02-building-your-first-mcp-server.md)** — reproduce the verified local task core, JSON store, MCP tools, and tests.
-3. **Testing the task core and storage boundary** — examine validation, file format, and local concurrency in more detail.
+3. **[Building Reliable MCP Tools: Revisions, Idempotency, and Recovery](03-building-reliable-mcp-tools.md)** — evolve the local workflow using Milestone 2 revisions, operation IDs, migration, validation, and recovery.
 4. **Designing safer MCP workflows** — examine tool schemas, descriptions, and explicit-intent limits in more detail.
 5. **Writing a reusable Codex skill** — instructions and workflows around the tool.
 6. **Adding Google Drive persistence** — authentication, data format, and storage adapter.
@@ -19,6 +19,6 @@ Conceptual chapters may use clearly labeled proposed designs. Write implementati
 
 ## Tutorial milestone tracker
 
-The local task core, JSON storage, and MCP tools were committed in `29a1fea` and verified locally as recorded in the [development journal](../development-journal.md). Chapter 1 explains the architecture; Chapter 2 reproduces that milestone. Add examples to later chapters when they are written and verified.
+The local task core, JSON storage, and MCP tools were committed in `29a1fea`; Chapter 2 reproduces that milestone. Chapter 3 covers the reliable local write contract in `1ee220c`. Both milestones and their local checks are recorded in the [development journal](../development-journal.md). Add examples to later chapters when they are written and verified.
 
 The separate Tutorial Writer skill is outside this series' current implementation scope.
