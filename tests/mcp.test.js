@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 test('MCP server lists tools and persists a task across process restarts', async t => {
   const root = join(process.cwd(), '.taskhub', 'test');
@@ -52,16 +53,33 @@ test('MCP server lists tools and persists a task across process restarts', async
   const listed = await first.request('tools/list');
   assert.deepEqual(listed.result.tools.map(tool => tool.name).sort(),
     ['complete_task', 'create_task', 'list_tasks', 'update_task']);
-  const created = await first.request('tools/call', { name: 'create_task', arguments: { title: 'MCP task' } });
-  assert.equal(created.result.isError, undefined);
-  const task = JSON.parse(created.result.content[0].text);
+  const createId = randomUUID();
+  const created = await first.request('tools/call', { name: 'create_task', arguments: { operationId: createId, title: 'MCP task' } });
+  assert.equal(created.result.isError, false);
+  const task = created.result.structuredContent.data;
+  assert.equal(created.result.structuredContent.ok, true);
   first.close();
 
   const second = await session();
   t.after(second.close);
   const tasks = await second.request('tools/call', { name: 'list_tasks', arguments: {} });
-  assert.equal(JSON.parse(tasks.result.content[0].text)[0].id, task.id);
+  assert.equal(tasks.result.structuredContent.data[0].id, task.id);
+  const repeated = await second.request('tools/call', { name: 'create_task',
+    arguments: { operationId: createId, title: 'MCP task' } });
+  assert.deepEqual(repeated.result.structuredContent.data, task);
+  const updated = await second.request('tools/call', { name: 'update_task',
+    arguments: { operationId: randomUUID(), id: task.id, expectedRevision: 1, notes: 'Updated' } });
+  assert.equal(updated.result.structuredContent.data.revision, 2);
+  const conflict = await second.request('tools/call', { name: 'complete_task',
+    arguments: { operationId: randomUUID(), id: task.id, expectedRevision: 1 } });
+  assert.equal(conflict.result.structuredContent.error.code, 'CONFLICT');
+  assert.equal(conflict.result.structuredContent.error.current.revision, 2);
   const missing = await second.request('tools/call', { name: 'complete_task',
-    arguments: { id: '00000000-0000-4000-8000-000000000000' } });
+    arguments: { operationId: randomUUID(), id: '00000000-0000-4000-8000-000000000000', expectedRevision: 1 } });
   assert.equal(missing.result.isError, true);
+  assert.equal(missing.result.structuredContent.error.code, 'NOT_FOUND');
+  const invalid = await second.request('tools/call', { name: 'create_task',
+    arguments: { operationId: randomUUID(), title: '   ' } });
+  assert.equal(invalid.result.isError, true);
+  assert.equal(invalid.result.structuredContent.error.code, 'INVALID_INPUT');
 });

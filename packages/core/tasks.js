@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { TaskHubError, normalizeCreate, normalizeUpdate, uuid, revision } from './validation.js';
 
 export class TaskHub {
   constructor(store, { now = () => new Date().toISOString(), id = randomUUID } = {}) {
@@ -6,70 +7,69 @@ export class TaskHub {
     this.now = now;
     this.id = id;
   }
-
-  async list() {
-    return this.store.read();
+  async list() { return (await this.store.read()).tasks; }
+  async create({ operationId, ...input }) {
+    operationId = uuid(operationId, 'operationId');
+    const args = normalizeCreate(input);
+    return this.write(operationId, 'create', args, doc => {
+      const stamp = this.now();
+      const task = { id: this.id(), ...args, status: 'open', revision: 1, createdAt: stamp, updatedAt: stamp };
+      doc.tasks.push(task);
+      return task;
+    });
   }
-
-  async create({ title, notes = '', dueDate = null }) {
-    const cleanTitle = requiredText(title, 'title');
-    const cleanNotes = optionalText(notes, 'notes');
-    const cleanDueDate = dateOrNull(dueDate);
-    const timestamp = this.now();
-    const task = { id: this.id(), title: cleanTitle, notes: cleanNotes, dueDate: cleanDueDate,
-      status: 'open', createdAt: timestamp, updatedAt: timestamp };
-    await this.store.change(tasks => [...tasks, task]);
-    return task;
+  async update({ operationId, id, expectedRevision, ...input }) {
+    operationId = uuid(operationId, 'operationId'); id = uuid(id, 'id'); revision(expectedRevision, 'expectedRevision');
+    const changes = normalizeUpdate(input);
+    const args = { id, expectedRevision, ...changes };
+    return this.write(operationId, 'update', args, doc => {
+      const index = findTask(doc, id, expectedRevision);
+      const task = { ...doc.tasks[index], ...changes, revision: doc.tasks[index].revision + 1, updatedAt: this.now() };
+      doc.tasks[index] = task;
+      return task;
+    });
   }
-
-  async update({ id, title, notes, dueDate }) {
-    const cleanId = requiredText(id, 'id');
-    if (title === undefined && notes === undefined && dueDate === undefined) {
-      throw new Error('Provide at least one field to update');
+  async complete({ operationId, id, expectedRevision, ...extra }) {
+    if (Object.keys(extra).length) throw new TaskHubError('INVALID_INPUT', 'Unsupported input field');
+    operationId = uuid(operationId, 'operationId'); id = uuid(id, 'id'); revision(expectedRevision, 'expectedRevision');
+    const args = { id, expectedRevision };
+    return this.write(operationId, 'complete', args, doc => {
+      const index = findTask(doc, id, expectedRevision);
+      const current = doc.tasks[index];
+      const task = current.status === 'completed' ? current :
+        { ...current, status: 'completed', revision: current.revision + 1, updatedAt: this.now() };
+      doc.tasks[index] = task;
+      return task;
+    });
+  }
+  async write(operationId, kind, args, apply) {
+    const signature = JSON.stringify({ kind, args });
+    try {
+      return await this.store.transact(doc => {
+        const prior = doc.operations[operationId];
+        if (prior) {
+          if (prior.signature !== signature) throw new TaskHubError('OPERATION_ID_REUSED', 'Operation ID was used with different arguments');
+          return { changed: false, result: prior.result };
+        }
+        const result = apply(doc);
+        doc.storeRevision++;
+        doc.operations[operationId] = { signature, result };
+        return { changed: true, result };
+      });
+    } catch (error) {
+      if (error.code !== 'OUTCOME_UNKNOWN') throw error;
+      try {
+        const prior = (await this.store.read()).operations[operationId];
+        if (prior?.signature === signature) return prior.result;
+      } catch { /* preserve uncertain outcome */ }
+      throw error;
     }
-    const changes = {};
-    if (title !== undefined) changes.title = requiredText(title, 'title');
-    if (notes !== undefined) changes.notes = optionalText(notes, 'notes');
-    if (dueDate !== undefined) changes.dueDate = dateOrNull(dueDate);
-    let updated;
-    await this.store.change(tasks => tasks.map(task => {
-      if (task.id !== cleanId) return task;
-      updated = { ...task, ...changes, updatedAt: this.now() };
-      return updated;
-    }));
-    if (!updated) throw new Error(`Task not found: ${cleanId}`);
-    return updated;
-  }
-
-  async complete({ id }) {
-    const cleanId = requiredText(id, 'id');
-    let updated;
-    await this.store.change(tasks => tasks.map(task => {
-      if (task.id !== cleanId) return task;
-      updated = task.status === 'completed' ? task : { ...task, status: 'completed', updatedAt: this.now() };
-      return updated;
-    }));
-    if (!updated) throw new Error(`Task not found: ${cleanId}`);
-    return updated;
   }
 }
-
-function requiredText(value, name) {
-  if (typeof value !== 'string' || !value.trim()) throw new Error(`${name} must be nonempty text`);
-  return value.trim();
-}
-
-function optionalText(value, name) {
-  if (typeof value !== 'string') throw new Error(`${name} must be text`);
-  return value.trim();
-}
-
-function dateOrNull(value) {
-  if (value === null) return null;
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) ||
-      Number.isNaN(Date.parse(`${value}T00:00:00Z`)) ||
-      new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) {
-    throw new Error('dueDate must be a real YYYY-MM-DD date or null');
-  }
-  return value;
+function findTask(doc, id, expectedRevision) {
+  const index = doc.tasks.findIndex(task => task.id === id);
+  if (index < 0) throw new TaskHubError('NOT_FOUND', 'Task not found');
+  const current = doc.tasks[index];
+  if (current.revision !== expectedRevision) throw new TaskHubError('CONFLICT', 'Task changed since it was read', { current });
+  return index;
 }
