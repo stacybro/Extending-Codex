@@ -1,13 +1,43 @@
-import { resolve } from 'node:path';
+import { resolve, join, relative, isAbsolute, sep } from 'node:path';
+import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import * as z from 'zod/v4';
 import { TaskHub } from '../../packages/core/tasks.js';
 import { JsonFileStore } from '../../packages/core/json-file-store.js';
+import { DriveStore } from '../../packages/core/drive-store.js';
+import { DriveTokenProvider } from '../drive/token-provider.js';
 import { TaskHubError } from '../../packages/core/validation.js';
 
-const dataFile = resolve(process.env.TASKHUB_DATA_FILE ?? '.taskhub/tasks.json');
-const tasks = new TaskHub(new JsonFileStore(dataFile));
+const mode = process.env.TASKHUB_STORAGE ?? 'local';
+if (mode !== 'local' && mode !== 'drive') throw new TaskHubError('INVALID_CONFIG', 'TASKHUB_STORAGE must be local or drive');
+const profileDir = join(process.env.LOCALAPPDATA ?? join(homedir(), 'AppData', 'Local'), 'TaskHub');
+const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
+const credentialsFile = resolve(process.env.TASKHUB_DRIVE_CREDENTIALS_FILE ?? join(profileDir, 'drive-poc', 'oauth-client.json'));
+const stateFile = resolve(process.env.TASKHUB_DRIVE_STATE_FILE ?? join(profileDir, 'drive-poc', 'poc-state.json'));
+const backupDir = resolve(process.env.TASKHUB_DRIVE_BACKUP_DIR ?? join(profileDir, 'drive-backups'));
+if (mode === 'drive') {
+  for (const path of [credentialsFile, stateFile, backupDir]) {
+    const inside = relative(repositoryRoot, path);
+    if (inside !== '..' && !inside.startsWith('..' + sep) && !isAbsolute(inside))
+      throw new TaskHubError('INVALID_CONFIG', 'Drive credentials, tokens, and backups must be outside the repository');
+  }
+}
+const store = mode === 'local'
+  ? new JsonFileStore(resolve(process.env.TASKHUB_DATA_FILE ?? '.taskhub/tasks.json'))
+  : new DriveStore({
+    fileId: process.env.TASKHUB_DRIVE_FILE_ID,
+    backupDir,
+    tokenProvider: new DriveTokenProvider({
+      credentialsFile,
+      stateFile,
+      account: process.env.TASKHUB_DRIVE_ACCOUNT
+    })
+  });
+if (mode === 'drive' && !['personal', 'work'].includes(process.env.TASKHUB_DRIVE_ACCOUNT))
+  throw new TaskHubError('INVALID_CONFIG', 'TASKHUB_DRIVE_ACCOUNT must be personal or work');
+const tasks = new TaskHub(store);
 // Core validation owns application errors so all tool calls share one response shape.
 const operationId = z.unknown().describe('UUID, stable across retries of this write');
 const taskId = z.unknown().describe('Task UUID from list_tasks');
@@ -31,7 +61,7 @@ function handler(operation) {
 }
 serveStdio(() => {
   const server = new McpServer({ name: 'taskhub', version: '0.2.0',
-    instructions: 'Only create tasks on explicit user request. Never save examples or hypothetical tasks. Before update or complete, list tasks to obtain the current revision; the user need not provide it. Use a fresh UUID operationId for each new write and reuse it unchanged for retries. On CONFLICT, explain the current state and ask before retrying. A due date never schedules an event.' });
+    instructions: 'Only create tasks on explicit user request. Never save examples or hypothetical tasks. Before update or complete, list tasks to obtain the current revision; the user need not provide it. Use a fresh UUID operationId for each new write and reuse it unchanged for retries. On CONFLICT, explain the current state and ask before retrying. On DRIVE_CHANGED, list again before attempting a new write. On OUTCOME_UNKNOWN, do not start a new operation until the saved operation ID is checked. A due date never schedules an event.' });
   server.registerTool('list_tasks', {
     description: 'List saved TaskHub tasks, including their current revisions. Read only.',
     inputSchema: z.object({})

@@ -1,6 +1,6 @@
 # System architecture
 
-The local task core, JSON storage adapter, and stdio MCP adapter are implemented. Cloud and visual components remain proposals.
+The task core, local JSON adapter, stdio MCP adapter, and optional Drive adapter are implemented. Local storage remains the default. The Drive adapter has passed mocked tests and disposable MCP checks with two accounts on one computer. Visual components remain proposals.
 
 ## Components and data flow
 
@@ -11,7 +11,7 @@ Visual dashboard (later) ---------------> task core
 Explicit scheduling request -> Calendar adapter (later)
 ```
 
-The task core owns task identity, fields, and create, list, update, and complete operations. The MCP server gives Codex structured actions; a later skill may provide reusable workflow guidance. The core receives a store with `read()` and `transact(transform)` methods; JSON storage implements it. A future Drive adapter must implement the same transaction semantics with enforceable conditional writes. A visual client should use the same operations. Calendar events and notifications require an explicit scheduling request and are outside task CRUD.
+The task core owns task identity, fields, and create, list, update, and complete operations. The MCP server gives Codex structured actions; a later skill may provide reusable workflow guidance. The core receives a store with `read()` and `transact(transform)` methods; JSON and Drive storage implement it. Drive mode reads and validates one shared file, saves a local backup, checks its Drive version immediately before writing, and stops on a known newer version. That check does not eliminate the read-check-write race or make `transact` atomic across devices. A visual client should use the same operations. Calendar events and notifications require an explicit scheduling request and are outside task CRUD.
 
 ## Local data contract
 
@@ -21,10 +21,10 @@ The JSON adapter writes and syncs a sibling temporary file, preserves the previo
 
 ## Future cross-device access
 
-Google Drive is the intended persistent cloud store without a hosted database. Use a regular shareable file rather than `appDataFolder` to allow separate accounts. Before shared writes, define file ownership, account authentication and authorization, sharing and revocation, and an enforceable conditional-write policy. A read followed by an unconditional upload could overwrite another device's changes. Validate the design with more than one device and separately authenticated accounts. No sync or account sharing is implemented yet.
+Google Drive mode uses one regular JSON file rather than `appDataFolder`. The primary setup uses the same personal Google account and file ID on both computers; each installation authorizes the Desktop OAuth client using `drive.file` and selects the file through Google Picker. Different Codex/ChatGPT accounts can launch those installations. The optional second-Google-account configuration was verified with disposable data on one computer. Phase B implements online-only best-effort version checks and local backups with documented manual restore. Simultaneous writes can still lose an update; the user accepts this for a single-user app. No real task data was connected or migrated, and cross-device behavior remains unverified.
 
 ## Proposed code layout
 
-`packages/core/` holds task behavior and local JSON storage; `integrations/codex/` holds the MCP adapter; `tests/` holds verification. Google adapters and `apps/web/` remain future work.
+`packages/core/` holds task behavior and storage adapters; `integrations/codex/` holds the MCP adapter; `integrations/drive/` handles OAuth token loading; `tests/` holds verification. `apps/web/` remains future work.
 
-See [ADR 0001](../decisions/0001-separate-task-core-from-integrations.md) for the boundary decision and [the roadmap](../roadmap.md) for sequencing.
+See [ADR 0001](../decisions/0001-separate-task-core-from-integrations.md) for the boundary decision, [ADR 0004](../decisions/0004-single-drive-file.md) for the revised Drive plan, [Drive storage setup](google-drive-storage.md) for operation and recovery, [Milestone 3 acceptance](milestone-3-acceptance.md) for the two-computer checks, and [the roadmap](../roadmap.md) for sequencing.

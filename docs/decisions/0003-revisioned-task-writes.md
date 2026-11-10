@@ -24,4 +24,6 @@ Shared data will live in a regular, shareable Google Drive file, not `appDataFol
 
 ## Verification limit
 
+The earlier enforceable Drive conditional-write requirement in this record is superseded by [ADR 0004](0004-single-drive-file.md) for the single-user Drive plan. That plan accepts a residual read-check-write race.
+
 Automated tests and one isolated fresh Codex session verified the local contract. The fresh session created, listed, updated, and completed one test task while leaving a hypothetical example unsaved. This does not verify every possible natural-language prompt, cloud conflict handling, or cross-account access.

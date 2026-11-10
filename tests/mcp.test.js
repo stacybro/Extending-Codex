@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -13,8 +13,10 @@ test('MCP server lists tools and persists a task across process restarts', async
   const file = join(dir, 'tasks.json');
 
   async function session() {
+    const env = { ...process.env, TASKHUB_DATA_FILE: file };
+    delete env.TASKHUB_STORAGE; // Exercise the default local mode.
     const child = spawn(process.execPath, ['integrations/codex/server.js'], {
-      cwd: process.cwd(), env: { ...process.env, TASKHUB_DATA_FILE: file }, stdio: ['pipe', 'pipe', 'pipe']
+      cwd: process.cwd(), env, stdio: ['pipe', 'pipe', 'pipe']
     });
     let buffer = '';
     const waiting = new Map();
@@ -82,4 +84,14 @@ test('MCP server lists tools and persists a task across process restarts', async
     arguments: { operationId: randomUUID(), title: '   ' } });
   assert.equal(invalid.result.isError, true);
   assert.equal(invalid.result.structuredContent.error.code, 'INVALID_INPUT');
+});
+
+test('Drive mode with missing file ID fails instead of falling back to local storage', () => {
+  const result = spawnSync(process.execPath, ['integrations/codex/server.js'], {
+    cwd: process.cwd(),
+    env: { ...process.env, TASKHUB_STORAGE: 'drive', TASKHUB_DRIVE_FILE_ID: '', TASKHUB_DRIVE_ACCOUNT: 'personal' },
+    encoding: 'utf8', timeout: 5000
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Drive file ID, authorization, and backup directory are required/);
 });
