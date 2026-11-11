@@ -1,30 +1,32 @@
-# TaskHub
+# Extending Codex: Building Custom Tools, Skills, and Integrations
 
-TaskHub is a task-management system intended to work with Codex. It supports local JSON storage and optional Google Drive storage without a hosted database. Future goals include Google Calendar scheduling, access across devices, and a visual interface.
+A five-chapter tutorial series for developers who want to extend Codex with project instructions, MCP tools, APIs, and persistent storage. **TaskHub**, a small task manager, is the running example. The concepts and patterns apply to other projects too.
 
-**Current status:** The version 2 task core, local JSON adapter, optional Google Drive adapter, and stdio MCP server are implemented. Local natural-language checks passed previously. Drive mode passed mocked tests and disposable MCP checks with two authorized accounts on one computer; real task migration and separate-device behavior remain unverified.
+## Read the series
 
-## Product rule
+1. [Understanding Codex Extensibility](docs/tutorials/01-understanding-codex-extensibility.md) — where instructions, skills, MCP, APIs, and storage fit.
+2. [Building Your First Codex MCP Server](docs/tutorials/02-building-your-first-mcp-server.md) — build a local task core, JSON store, and four MCP tools.
+3. [Building Reliable MCP Tools](docs/tutorials/03-building-reliable-mcp-tools.md) — add revisions, idempotency, validation, and recovery.
+4. [Choosing Cloud Storage for a Codex MCP Integration](docs/tutorials/04-choosing-cloud-storage.md) — understand Google Drive, Google Cloud, OAuth, and expected costs.
+5. [Integrating Google Drive with a Codex MCP Server](docs/tutorials/05-integrating-google-drive.md) — connect the tools to one disposable Drive JSON file.
 
-Only create tasks when a user explicitly asks to create them. Scheduling and notifications also require explicit requests.
+The [tutorial index](docs/tutorials/README.md) tracks the implementation commits and verification status. Chapters 2, 3, and 5 use committed TaskHub milestones so readers can inspect the code behind each example.
 
-## Repository guide
+## Run the example
 
-- [`AGENTS.md`](AGENTS.md): project-wide instructions.
-- [`docs/development-journal.md`](docs/development-journal.md): factual implementation log.
-- [`docs/architecture/overview.md`](docs/architecture/overview.md): proposed system architecture.
-- [`docs/decisions/`](docs/decisions/): architecture decision records.
-- [`docs/roadmap.md`](docs/roadmap.md): implementation milestones.
-- [`docs/tutorials/README.md`](docs/tutorials/README.md): public tutorial series outline.
+From the repository root, install dependencies and run the automated tests:
 
-`packages/core/` holds task operations and storage adapters. `integrations/codex/` exposes MCP tools. `integrations/drive/` holds OAuth support. `tests/` covers the core, adapters, and MCP protocol. A web app is future work.
+```text
+npm ci
+npm test
+```
 
-## Next milestone
+TaskHub exposes `list_tasks`, `create_task`, `update_task`, and `complete_task` through a local stdio MCP server. Its default store is a local JSON file; Chapter 5 shows an optional Google Drive mode. Start with [Chapter 2](docs/tutorials/02-building-your-first-mcp-server.md) for a reproducible build and Codex registration, or use the [Drive setup and recovery guide](docs/architecture/google-drive-storage.md) for the implemented Drive configuration.
 
-Google Drive mode is available for a single shared JSON file. It uses best-effort version checks and local backups; simultaneous writes can still lose an update. See [Drive setup and recovery](docs/architecture/google-drive-storage.md) before enabling it. The default local mode remains available.
+Only create a task when the user explicitly requests one. A due date does not schedule an event or notification. Keep task data, OAuth tokens, credentials, and backups out of Git.
 
-## Local setup
+## Verification boundaries
 
-Run `npm ci`, then `npm test` from the repository root. `npm run start:mcp` starts the stdio server; an MCP host should launch it, rather than a person typing into its terminal. Data defaults to `.taskhub/tasks.json` in the server working directory. Set `TASKHUB_DATA_FILE` to an absolute path to choose another local file. The data directory is ignored by Git. The server reads valid version 1 files and saves version 2 on the first successful write. It keeps the previous valid file at `.bak`. If the primary is corrupt or missing while a backup exists, inspect both files before manually restoring; the server will not start an empty replacement. A stale `.lock` file after a crash also requires inspection before removal.
+The local workflow and Milestone 3 Drive integration were verified with tests and disposable data on **one computer**. Real-task migration and second-computer operation have not been verified. Drive mode uses a best-effort version check and local backups; simultaneous writes can still lose an update. The [development journal](docs/development-journal.md) records what was actually tested.
 
-For Codex CLI, register the server with `codex mcp add taskhub -- node C:\Users\stacy\OneDrive\Documents\ChatGPT\TaskHub\integrations\codex\server.js`, then check `codex mcp list`. Set `TASKHUB_DATA_FILE` to an absolute path when registering the server so data does not depend on the Codex working directory. This local installation used `C:\Users\stacy\OneDrive\Documents\ChatGPT\TaskHub\.taskhub\tasks.json`. See [official OpenAI MCP documentation](https://developers.openai.com/learn/docs-mcp) for the current registration workflow.
+Google Calendar scheduling, a reusable skill, and a visual dashboard are possible later extensions, outside this five-chapter core series.
