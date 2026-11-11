@@ -66,3 +66,5 @@ Sharing a file in Drive and granting an application access to that file are sepa
 ## Next steps
 
 [Chapter 5](05-integrating-google-drive.md) walks through the one-account Cloud Console and OAuth setup using Milestone 3's disposable file. Cross-account sharing and Picker troubleshooting are optional advanced material.
+
+<script type="module" src="../assets/render-mermaid.js"></script>

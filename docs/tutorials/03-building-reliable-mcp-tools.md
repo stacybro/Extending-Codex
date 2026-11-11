@@ -230,3 +230,5 @@ Stable operation IDs and revisions improve the write contract; they do not prove
 - **Milestone 1:** `29a1fea36a45b352b136413c9eae3fbf58d9be6c`, the Chapter 2 local JSON and MCP implementation.
 - **Milestone 2:** `1ee220cfa814ed8c0bb3c25927f1e367aaa0830f`, including [ADR 0003](../decisions/0003-revisioned-task-writes.md), the core, store, validation module, MCP adapter, and tests.
 - **Checks for this chapter:** six source excerpts matched `1ee220c`; the application and test files matched that commit at the time of this review, and `npm test` passed 10 tests with 0 failures. `node --check integrations/codex/server.js` passed, and the Mermaid diagram parsed successfully. The manual Codex session is documented in the journal and was not repeated for this chapter. Cloud, cross-device, and multi-account behavior were unverified at Milestone 2; Chapter 5 covers the later one-computer Drive checks.
+
+<script type="module" src="../assets/render-mermaid.js"></script>

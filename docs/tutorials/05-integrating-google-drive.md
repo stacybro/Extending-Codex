@@ -165,3 +165,5 @@ Google Calendar scheduling and notifications could be taught in a standalone **A
 - Source: committed Milestone 3 `bd137975bffd6d5885b6a25a771ca244b57d45e6` (`git show bd13797`); relevant implementation and results are recorded in the [development journal](../development-journal.md) and [acceptance record](../architecture/milestone-3-acceptance.md). A Git remote is configured, but this review did not confirm that the commit is publicly accessible there.
 - Documented Milestone 3 result: `npm test` passed **21/21**; changed JavaScript syntax checks and `git diff --check` passed. The mocked Drive adapter and token provider are covered by tests. The disposable MCP protocol harness exercised all four tools under both accounts on one computer. The later natural-language smoke test exercised create, list, update, and complete under the personal account on one computer.
 - Not verified by Milestone 3: a second computer, simultaneous cloud writes, real-task migration, production OAuth publishing, or a guaranteed free long-term price.
+
+<script type="module" src="../assets/render-mermaid.js"></script>

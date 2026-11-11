@@ -83,3 +83,5 @@ Official product and protocol details can change. Recheck the linked OpenAI docu
 ## Next steps
 
 The [next chapter](02-building-your-first-mcp-server.md) builds the original local TaskHub milestone from scratch: task core, JSON storage, MCP tools, and tests. Use the distinctions here as you follow it: what guides Codex, what performs the action, and what enforces the rule?
+
+<script type="module" src="../assets/render-mermaid.js"></script>
