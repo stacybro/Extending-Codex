@@ -74,7 +74,7 @@ The first request should not call `add_note`; the second may. The worked result 
 
 ## Limitations and verification still needed
 
-This chapter explains boundaries rather than walking through the working local tools. Their implementation is in development commit `29a1fea`; a reusable skill, Drive adapter, and cross-device workflow are not implemented. The [development journal](../development-journal.md) records the local verification.
+This chapter explains boundaries using the Milestone 1 snapshot rather than walking through the working local tools. Their implementation is in development commit `29a1fea`; at that milestone, a reusable skill, Drive adapter, and cross-device workflow were not implemented. Chapter 5 covers the later Drive adapter. The [development journal](../development-journal.md) records the local verification.
 
 The local tests and Codex check do not prove that every caller has explicit user intent: `create_task` relies on Codex following guidance. The local MCP server does not authenticate or authorize users, and the JSON store coordinates writes only within one store instance. Drive access needs separate authentication, authorization, file-format, and concurrent-edit verification. A local test cannot establish cross-device behavior.
 

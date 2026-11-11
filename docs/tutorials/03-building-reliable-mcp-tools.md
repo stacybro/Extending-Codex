@@ -223,10 +223,10 @@ Stable operation IDs and revisions improve the write contract; they do not prove
 
 ## Next steps
 
-The next chapter can examine how tool descriptions and schemas guide Codex, where application validation takes over, and how to test ambiguous requests. The local write contract here gives those workflows a stable base; it does not replace authorization or user intent checks.
+[Chapter 4](04-choosing-cloud-storage.md) explains the storage and OAuth architecture; [Chapter 5](05-integrating-google-drive.md) applies this write contract to a disposable Drive file. The local write contract does not replace authorization or user intent checks.
 
 ## Verified Against
 
 - **Milestone 1:** `29a1fea36a45b352b136413c9eae3fbf58d9be6c`, the Chapter 2 local JSON and MCP implementation.
 - **Milestone 2:** `1ee220cfa814ed8c0bb3c25927f1e367aaa0830f`, including [ADR 0003](../decisions/0003-revisioned-task-writes.md), the core, store, validation module, MCP adapter, and tests.
-- **Checks for this chapter:** six source excerpts matched `1ee220c`; the current application and test files were identical to that commit, and `npm test` passed 10 tests with 0 failures. `node --check integrations/codex/server.js` passed, and the Mermaid diagram parsed successfully. The manual Codex session is documented in the journal and was not repeated for this chapter. Cloud, cross-device, and multi-account behavior remains unverified.
+- **Checks for this chapter:** six source excerpts matched `1ee220c`; the application and test files matched that commit at the time of this review, and `npm test` passed 10 tests with 0 failures. `node --check integrations/codex/server.js` passed, and the Mermaid diagram parsed successfully. The manual Codex session is documented in the journal and was not repeated for this chapter. Cloud, cross-device, and multi-account behavior were unverified at Milestone 2; Chapter 5 covers the later one-computer Drive checks.

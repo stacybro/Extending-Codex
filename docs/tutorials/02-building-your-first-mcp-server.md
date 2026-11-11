@@ -481,7 +481,7 @@ Do not run `npm run start:mcp` and type ordinary text into that terminal. A host
 
 This is a local single-user example. Keep `.taskhub/` out of Git: task data may be private. `.gitignore` does not encrypt the file or prevent a synced folder from copying it; choose its location and operating-system permissions accordingly. The `create_task` description and project instructions guide Codex to require an explicit request; the server does not independently prove intent. Its field validation is not user authentication or authorization. Before allowing shared or cloud writes, define identity, permissions, and concurrent-edit behavior, then enforce access on the server for each operation. [Official MCP guidance](https://developers.openai.com/plugins/build/mcp-server) likewise says not to rely on the model for authorization.
 
-The JSON adapter serializes changes made through one store instance. It does not provide multi-process locking, sync, or cross-device conflict resolution. A due date does not schedule an event. Google Drive, Google Calendar, a reusable skill, and a visual dashboard are future milestones.
+The JSON adapter serializes changes made through one store instance. It does not provide multi-process locking, sync, or cross-device conflict resolution. A due date does not schedule an event. Later core chapters add reliable local writes and a disposable Google Drive integration; Calendar, a reusable skill, and a visual dashboard remain outside this series.
 
 ## Next steps
 
